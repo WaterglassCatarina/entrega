@@ -6,6 +6,141 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <title>Waterglass Consulting · A sua apresentação</title>
+<link rel="icon" href="https://images.squarespace-cdn.com/content/v1/65ccd5642ae29666675bdf69/38949765-80d8-41a0-bcd4-b075add74bd6/favicon.ico?format=100w">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pontano+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Cores do site waterglass-consulting.com */
+    --wg-azul: #152e4e;
+    --wg-azul-claro: #b4c2d6;
+    --wg-branco: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--wg-azul);
+    color: var(--wg-branco);
+    font-family: "Pontano Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+  }
+  .wg-logo { width: 340px; max-width: 78%; height: auto; margin-bottom: 56px; }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(1.6rem, 4.5vw, 2.2rem);
+    line-height: 1.25;
+    margin: 0 0 14px;
+  }
+  p { font-size: 1.1rem; line-height: 1.6; margin: 0 0 36px; color: var(--wg-azul-claro); max-width: 30em; }
+  a.wg-botao {
+    display: inline-block;
+    padding: 17px 40px;
+    border-radius: 300px;
+    background: var(--wg-branco);
+    color: var(--wg-azul);
+    font-size: .95rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background .15s ease, transform .15s ease;
+  }
+  a.wg-botao:hover, a.wg-botao:focus-visible { background: var(--wg-azul-claro); }
+  a.wg-botao:focus-visible { outline: 2px solid var(--wg-branco); outline-offset: 4px; }
+  a.wg-botao:active { transform: scale(.98); }
+  .wg-nota { margin: 28px 0 0; font-size: .95rem; }
+  footer { padding: 24px; text-align: center; font-size: .85rem; color: var(--wg-azul-claro); }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <img class="wg-logo" src="https://images.squarespace-cdn.com/content/v1/65ccd5642ae29666675bdf69/e5c4f3f0-06db-49c2-bc01-9d410126dd46/WG_white_signature_.png?format=750w" alt="Waterglass — Clear communication is vital">
+
+  <div id="wg-ok" hidden>
+    <h1>A sua apresentação está pronta</h1>
+    <p>Clique no botão abaixo para descarregar a sua apresentação.</p>
+    <a id="wg-botao" class="wg-botao" href="#" rel="noopener">Descarregar apresentação</a>
+    <p id="wg-iniciado" class="wg-nota" hidden>
+      O download foi iniciado. Se não começar dentro de alguns segundos, clique novamente no botão.
+    </p>
+  </div>
+
+  <div id="wg-erro" hidden>
+    <h1>Link inválido ou expirado</h1>
+    <p>Não foi possível encontrar a sua apresentação. Por favor contacte-nos para receber um novo link.</p>
+  </div>
+</main>
+<footer>Waterglass © All rights reserved · <a href="https://www.waterglass-consulting.com">waterglass-consulting.com</a></footer>
+
+<script>
+(function () {
+  // ---------- CONFIG ----------
+  // Domínios SharePoint/OneDrive da Waterglass. Só links destes domínios são aceites.
+  var DOMINIOS_PERMITIDOS = [
+    "waterglassconsulting.sharepoint.com",
+    "waterglassconsulting-my.sharepoint.com"
+  ];
+  // ----------------------------
+
+  function descodificar(codigo) {
+    var b64 = codigo.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return atob(b64);
+  }
+
+  function linkDeDownload(codigo) {
+    var url = new URL(descodificar(codigo));
+    if (url.protocol !== "https:") throw new Error("protocolo");
+    if (DOMINIOS_PERMITIDOS.indexOf(url.hostname.toLowerCase()) === -1) throw new Error("dominio");
+    url.searchParams.delete("web");
+    url.searchParams.set("download", "1"); // força o download em vez de abrir no browser
+    return url.toString();
+  }
+
+  var ok = document.getElementById("wg-ok");
+  var erro = document.getElementById("wg-erro");
+  try {
+    // A ligação vai depois do "#": essa parte do endereço nunca é enviada ao servidor.
+    var codigo = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("f")
+              || new URLSearchParams(window.location.search).get("f");
+    if (!codigo) throw new Error("sem codigo");
+    var botao = document.getElementById("wg-botao");
+    botao.href = linkDeDownload(codigo);
+    botao.addEventListener("click", function () {
+      document.getElementById("wg-iniciado").hidden = false;
+    });
+    ok.hidden = false;
+  } catch (e) {
+    erro.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Waterglass Consulting · A sua apresentação</title>
 <style>html,body{margin:0;background:#ffffff;} body{min-height:100vh;display:flex;align-items:center;justify-content:center;}</style>
 </head>
 <body>
