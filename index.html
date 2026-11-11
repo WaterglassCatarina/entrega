@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Waterglass Consulting · A sua apresentação</title>
+<style>html,body{margin:0;background:#ffffff;} body{min-height:100vh;display:flex;align-items:center;justify-content:center;}</style>
+</head>
+<body>
+<style>
+  .wg-entrega {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* Branding: ajustar às cores da Waterglass */
+    --wg-cor-principal: #1f3a5f;
+    --wg-cor-texto-botao: #ffffff;
+    --wg-cor-texto: #222222;
+    --wg-cor-secundaria: #6b7280;
+
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 16px;
+    text-align: center;
+    color: var(--wg-cor-texto);
+  }
+  .wg-entrega img.wg-logo { max-width: 220px; height: auto; margin-bottom: 32px; }
+  .wg-entrega h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 12px; }
+  .wg-entrega p { font-size: 1.05rem; line-height: 1.5; margin: 0 0 28px; color: var(--wg-cor-secundaria); }
+  .wg-entrega a.wg-botao {
+    display: inline-block;
+    padding: 16px 36px;
+    border-radius: 6px;
+    background: var(--wg-cor-principal);
+    color: var(--wg-cor-texto-botao);
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity .15s ease;
+  }
+  .wg-entrega a.wg-botao:hover, .wg-entrega a.wg-botao:focus { opacity: .85; }
+  .wg-entrega .wg-nota { margin-top: 24px; font-size: .9rem; }
+  .wg-entrega [hidden] { display: none !important; }
+</style>
+
+<div class="wg-entrega">
+  <!-- Opcional: descomentar e colocar o URL do logótipo
+  <img class="wg-logo" src="URL_DO_LOGOTIPO" alt="Waterglass">
+  -->
+
+  <div id="wg-ok" hidden>
+    <h1>A sua apresentação está pronta</h1>
+    <p>Clique no botão abaixo para descarregar a sua apresentação.</p>
+    <a id="wg-botao" class="wg-botao" href="#" rel="noopener">Descarregar apresentação</a>
+    <p id="wg-iniciado" class="wg-nota" hidden>
+      O download foi iniciado. Se não começar dentro de alguns segundos, clique novamente no botão.
+    </p>
+  </div>
+
+  <div id="wg-erro" hidden>
+    <h1>Link inválido ou expirado</h1>
+    <p>Não foi possível encontrar a sua apresentação. Por favor contacte-nos para receber um novo link.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- CONFIG ----------
+  // Domínios SharePoint/OneDrive da Waterglass. Só links destes domínios são aceites.
+  var DOMINIOS_PERMITIDOS = [
+    "waterglassconsulting.sharepoint.com",
+    "waterglassconsulting-my.sharepoint.com"
+  ];
+  // ----------------------------
+
+  function descodificar(codigo) {
+    var b64 = codigo.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return atob(b64);
+  }
+
+  function linkDeDownload(codigo) {
+    var url = new URL(descodificar(codigo));
+    if (url.protocol !== "https:") throw new Error("protocolo");
+    if (DOMINIOS_PERMITIDOS.indexOf(url.hostname.toLowerCase()) === -1) throw new Error("dominio");
+    url.searchParams.delete("web");
+    url.searchParams.set("download", "1"); // força o download em vez de abrir no browser
+    return url.toString();
+  }
+
+  var ok = document.getElementById("wg-ok");
+  var erro = document.getElementById("wg-erro");
+  try {
+    // A ligação vai depois do "#": essa parte do endereço nunca é enviada ao servidor.
+    var codigo = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("f")
+              || new URLSearchParams(window.location.search).get("f");
+    if (!codigo) throw new Error("sem codigo");
+    var botao = document.getElementById("wg-botao");
+    botao.href = linkDeDownload(codigo);
+    botao.addEventListener("click", function () {
+      document.getElementById("wg-iniciado").hidden = false;
+    });
+    ok.hidden = false;
+  } catch (e) {
+    erro.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
