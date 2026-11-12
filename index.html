@@ -259,11 +259,7 @@
       label.textContent = "✓ Download started";
       note.textContent = "If the download didn’t start, click the button again.";
       note.classList.add("visible");
-      /* Allow retry after 4 s */
-      btn._t2 = setTimeout(function () {
-        btn.classList.remove("done");
-        label.textContent = "Click here to download";
-      }, 4000);
+      /* Stays green; clicking again re-triggers the download */
     }, 2200);
   });
 })();
