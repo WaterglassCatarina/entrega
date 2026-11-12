@@ -7,9 +7,9 @@
 <meta name="referrer" content="no-referrer">
 <title>Waterglass · Presentation</title>
 <link rel="icon" href="https://images.squarespace-cdn.com/content/v1/65ccd5642ae29666675bdf69/38949765-80d8-41a0-bcd4-b075add74bd6/favicon.ico?format=100w">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pontano+Sans:wght@300..700&display=swap">
 <style>
+  @font-face { font-family: "Pontano Sans"; font-style: normal; font-weight: 300 700; font-display: swap; src: url(https://fonts.gstatic.com/s/pontanosans/v19/qFdD35GdgYR8EzR6oBLDHa3axT8NoVgyNA.woff2) format("woff2"); }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
@@ -25,7 +25,7 @@
   body {
     background: var(--navy);
     color: var(--white);
-    font-family: 'Pontano Sans', sans-serif;
+    font-family: 'Pontano Sans', 'Helvetica Neue', Arial, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -145,13 +145,15 @@
     src="https://images.squarespace-cdn.com/content/v1/65ccd5642ae29666675bdf69/e5c4f3f0-06db-49c2-bc01-9d410126dd46/WG_white_signature_.png?format=1500w"
     alt="Waterglass">
 
-  <div id="ok-state" style="display:flex;flex-direction:column;align-items:center;">
+  <div id="ok-state" style="display:none;flex-direction:column;align-items:center;">
     <a id="dl-btn" class="btn" href="#" rel="noopener noreferrer">
       <span class="spinner" id="spinner"></span>
       <span id="btn-label">Click here to download</span>
     </a>
-    <p class="note" id="note"></p>
+    <p class="note" id="note" aria-live="polite"></p>
   </div>
+
+  <noscript><p style="color:#b4c2d6;margin-top:8px">Please enable JavaScript to download your file.</p></noscript>
 
   <div class="error-box" id="error-state">
     <p><strong>Link not found</strong>Please contact us for a new download link.</p>
@@ -192,36 +194,40 @@
   */
   function decodeFragment(frag) {
     if (!frag) throw new Error("empty");
+    var m;
 
-    /* v1 short link */
-    if (frag[0] === "1") {
-      var type    = frag[1]; /* p/w/x/b */
-      var rest    = frag.slice(2);
-      var comma   = rest.indexOf(",");
-      if (comma === -1) throw new Error("fmt");
-      var shareId = rest.slice(0, comma);
-      var token   = rest.slice(comma + 1);
-      var full    = "https://" + MY_HOST + "/:" + type + ":/g/personal/" + MY_OWNER + "/" + shareId + "?e=" + token;
-      return buildDownloadUrl(full);
+    /* v1 short link — ignores anything appended after the token (trackers, punctuation) */
+    m = /^1([a-z])([A-Za-z0-9_-]+),([A-Za-z0-9_-]+)/i.exec(frag);
+    if (m) {
+      return buildDownloadUrl("https://" + MY_HOST + "/:" + m[1].toLowerCase() + ":/g/personal/" +
+                              MY_OWNER + "/" + m[2] + "?e=" + m[3]);
     }
 
-    /* v0 host-code format: #0<m|t><b64url(path?qs)> */
-    if (frag[0] === "0") {
-      var code = frag[1];
-      var host = code === "t" ? SP_HOST : MY_HOST;
-      var decoded = b64dec(frag.slice(2));
-      return buildDownloadUrl("https://" + host + decoded);
+    /* v0 host-code format: 0<m|t><b64url(path?qs)> */
+    m = /^0([mt])([A-Za-z0-9_-]+)/.exec(frag);
+    if (m) {
+      var path = b64dec(m[2]);
+      if (path.charAt(0) !== "/") throw new Error("fmt");
+      return buildDownloadUrl("https://" + (m[1] === "t" ? SP_HOST : MY_HOST) + path);
     }
 
-    /* legacy: #f=<b64url(fullUrl)> */
-    var params = new URLSearchParams(frag.startsWith("f=") ? frag : frag.replace(/^#/, ""));
-    var f = params.get("f");
-    if (!f) throw new Error("fmt");
-    return buildDownloadUrl(b64dec(f));
+    /* legacy: f=<b64url(fullUrl)> */
+    m = /(?:^|&)f=([A-Za-z0-9_-]+)/.exec(frag);
+    if (m) return buildDownloadUrl(b64dec(m[1]));
+
+    throw new Error("fmt");
+  }
+
+  /* Some email security scanners re-encode links (e.g. "," -> "%2C") or move the
+     code from "#" to "?"; accept both. */
+  function readCode() {
+    var raw = window.location.hash ? window.location.hash.slice(1) : window.location.search.slice(1);
+    try { raw = decodeURIComponent(raw); } catch (e) {}
+    return raw.replace(/^\s+|\s+$/g, "");
   }
 
   /* ── Init ── */
-  var frag = window.location.hash.slice(1); /* strip leading # */
+  var frag = readCode();
   var btn    = document.getElementById("dl-btn");
   var label  = document.getElementById("btn-label");
   var spinner = document.getElementById("spinner");
@@ -230,6 +236,7 @@
   try {
     var dlUrl = decodeFragment(frag);
     btn.href = dlUrl;
+    document.getElementById("ok-state").style.display = "flex";
   } catch (e) {
     document.getElementById("ok-state").style.display = "none";
     document.getElementById("error-state").style.display = "block";
